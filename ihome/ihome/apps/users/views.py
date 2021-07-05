@@ -192,7 +192,20 @@ class ModifyNameView(View):
 class UserAuthView(View):
     '''实名制认证'''
 
+    @method_decorator(login_required)
     def post(self, request):
         dict_data = json.loads(request.body.decode())
         real_name = dict_data.get('real_name')
         id_card = dict_data.get('id_card')
+        if not all([real_name, id_card]):
+            return http.JsonResponse({'errno': RET.PARAMERR, 'errmsg': '参数错误'})
+        user = request.user
+        try:
+            user.real_name = real_name
+            user.id_card = id_card
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'errno': RET.PARAMERR, 'errmsg': '数据保存失败'})
+        else:
+            return http.JsonResponse({'errno': RET.OK, 'errmsg': '认证信息保存成功'})
