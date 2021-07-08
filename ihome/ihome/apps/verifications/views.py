@@ -5,13 +5,13 @@ import re
 
 from django import http
 from django.views import View
-from django.shortcuts import render
 from django_redis import get_redis_connection
 
 # Create your views here.
 from utils import constants
 from utils.response_code import RET
 from .libs.captcha.captcha import captcha
+from celery_tasks.sms.tasks import ccp_send_sms_code
 
 logger = logging.getLogger('django')
 
@@ -89,6 +89,16 @@ class SMSCodeView(View):
         pl.setex("sms_%s" % mobile, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
         pl.setex("sms_code_flag_%s" % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
         pl.execute()
-        # 5.异步任务处理
+        # 5.发送短信+异步任务处理
+        # try:
+        #     result = CCP().send_message(mobile=mobile, tid='1',
+        #                                 datas=(sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60))
+        #     if result != 1:
+        #         return http.JsonResponse({'errno': RET.THIRDERR, 'errmsg': '第三方系统出错'})
+        # except Exception as e:
+        #     logger.error(e)
+        #     return http.JsonResponse({'errno': RET.UNKOWNERR, 'errmsg': '未知错误'})
+        # CCP().send_message(mobile=mobile, tid='1', datas=(sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60))
+        ccp_send_sms_code.delay(mobile, sms_code)
         # 6.返回响应
         return http.JsonResponse({'errno': RET.OK, 'errmsg': '发送短信成功'})

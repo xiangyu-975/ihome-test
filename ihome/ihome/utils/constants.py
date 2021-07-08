@@ -32,3 +32,6 @@ HOUSE_LIST_PAGE_CAPACITY = 2
 
 # 房屋列表页面Redis缓存时间，单位：秒
 HOUSE_LIST_REDIS_EXPIRES = 7200
+
+# 云通讯短信模板
+SEND_SMS_TEMPLATE_ID = 1

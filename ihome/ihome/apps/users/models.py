@@ -29,3 +29,10 @@ class User(AbstractUser):
             "user_id": self.id,
         }
         return data
+
+    def to_auth_dict(self):
+        data = {
+            'real_name': self.real_name,
+            'id_card': self.id_card
+        }
+        return data

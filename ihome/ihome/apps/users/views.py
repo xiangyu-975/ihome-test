@@ -1,22 +1,22 @@
 import json
 import logging
 import re
-from datetime import datetime
 
 from django import http
 from django.conf import settings
-from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render
+from django.contrib.auth import login, logout, authenticate
 from django.utils.decorators import method_decorator
 from django_redis import get_redis_connection
 # Create your views here.
 from django.views import View
 from pymysql import DatabaseError
 
-from libs.qiniuyun.qiniu_storage import storage
 from utils.decorators import login_required
 from utils.param_checking import image_file
 from utils.response_code import RET
+
+from libs.qiniuyun.qiniu_storage import storage
+from celery_tasks.tpc.tasks import tpc_storage
 from .models import User
 
 logger = logging.getLogger('django')
@@ -155,6 +155,11 @@ class AvatarView(View):
         # 读取出文件对象的二进制数据
         file_data = avatar.read()
         #
+        # try:
+        #     key = tpc_storage.apply_async(file_data)
+        # except Exception as e:
+        #     logger.error(e)
+        #     return http.JsonResponse({'errno': RET.THIRDERR, 'errmsg': '上传图片失败'})
         try:
             key = storage(file_data)
         except Exception as e:
@@ -193,6 +198,11 @@ class UserAuthView(View):
     '''实名制认证'''
 
     @method_decorator(login_required)
+    def get(self, request):
+        # 显示认证信息
+        data = request.user.to_auth_dict()
+        return http.JsonResponse({'errno': RET.OK, 'errmsg': '认证信息查询成功', 'data': data})
+
     def post(self, request):
         dict_data = json.loads(request.body.decode())
         real_name = dict_data.get('real_name')
@@ -209,3 +219,10 @@ class UserAuthView(View):
             return http.JsonResponse({'errno': RET.PARAMERR, 'errmsg': '数据保存失败'})
         else:
             return http.JsonResponse({'errno': RET.OK, 'errmsg': '认证信息保存成功'})
+
+
+class UserOrderView(View):
+    '''用户订单'''
+
+    def get(self, request):
+        user = request.user

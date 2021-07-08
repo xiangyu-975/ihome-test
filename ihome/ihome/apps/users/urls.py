@@ -17,4 +17,6 @@ urlpatterns = [
     url(r'^user/name$', views.ModifyNameView.as_view()),
     # 用户实名制认证
     url(r'^user/auth$', views.UserAuthView.as_view()),
+    # 获取订单列表
+    url(r'^user/orders$', views.UserOrderView.as_view()),
 ]

@@ -66,6 +66,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'verifications',
     'users',
+    'houses',
+    'orders',
 ]
 
 MIDDLEWARE = [
@@ -131,6 +133,13 @@ CACHES = {
     "verify_code": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "house_cache": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/3",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -219,3 +228,7 @@ AUTH_USER_MODEL = 'users.User'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'ihome/static')]
 QINIU_URL = "http://qvqa82r15.hn-bkt.clouddn.com/"
+
+# 添加自定义用户认证登录
+AUTHENTICATION_BACKENDS = ['utils.check_account.UsernameMobileAuthBackend']
+

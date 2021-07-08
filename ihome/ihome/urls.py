@@ -21,6 +21,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path(r'^api/v1.0/', include('verifications.urls')),
     # path(r'^api/v1.0/', include('users.urls')),
+    # 注册
     url(r'^api/v1.0/', include('verifications.urls')),
+    # 用户
     url(r'^api/v1.0/', include('users.urls')),
+    # 房屋
+    url(r'^api/v1.0/', include('houses.urls')),
+    # 订单
+    url(r'^api/v1.0/', include('orders.urls')),
 ]
