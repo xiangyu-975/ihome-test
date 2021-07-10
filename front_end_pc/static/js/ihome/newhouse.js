@@ -69,7 +69,7 @@ $(document).ready(function(){
         })
     })
 
-    // // TODO: 处理图片表单的数据
+    // TODO: 处理图片表单的数据
     // $("#form-house-info").hide()
     // $("#form-house-image").show()
     // $("#house-id").val('2')

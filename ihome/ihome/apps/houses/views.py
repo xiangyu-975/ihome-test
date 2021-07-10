@@ -88,12 +88,13 @@ class HouseView(View):
         except Exception as e:
             logger.error(e)
             return http.JsonResponse({'errno': RET.PARAMERR, 'errmsg': '参数错误'})
-        redis_conn = get_redis_connection("house_cache")
+
         try:
-            redis_key = "house_%s_%s_%s_%s" % (area_id, start_date_str, end_date_str, sort_key)
+            redis_conn = get_redis_connection("house_cache")
+            redis_key = "houses_%s_%s_%s_%s" % (area_id, start_date_str, end_date_str, sort_key)
             data = redis_conn.hget(redis_key, page)
             if data:
-                return http.JsonResponse({'errno': RET.OK, 'errmsg': 'OK', 'data': data})
+                return http.JsonResponse({'errno': RET.OK, 'errmsg': 'OK', 'data': json.loads(data)})
         except Exception as e:
             logger.error(e)
         # 对日期进行相关处理
@@ -155,6 +156,22 @@ class HouseView(View):
             'total_page': total_page,
             'houses': houses
         }
+        if page <= total_page:
+            try:
+                # 生成缓存用的key
+                redis_key = "houses_%s_%s_%s_%s" % (area_id, start_date_str, end_date_str, sort_key)
+                # 获取 redis_store 的 pipeline 对象，利用管道可以一次性做多个redis的操作
+                pl = redis_conn.pipeline()
+                # 开启事务
+                pl.multi()
+                # 缓存数据  redis中存储的是二进制的字符串，所以字典要转为二进制的格式进行缓存
+                pl.hset(redis_key, page, json.dumps(data))
+                # 设置保存数据的有效期
+                pl.expire(redis_key, constants.HOUSE_LIST_REDIS_EXPIRES)
+                # 提交事务
+                pl.execute()
+            except Exception as e:
+                logger.error(e)
 
         return http.JsonResponse({'errno': RET.OK, 'errmsg': 'OK', 'data': data})
 
@@ -240,6 +257,13 @@ class HouseView(View):
                 transaction.savepoint_rollback(save_id)
                 return http.JsonResponse({'errno': RET.DBERR, 'errmsg': '数据库保存失败'})
             transaction.savepoint_commit(save_id)
+            # 发布成功，删除缓存中房源数据
+            try:
+                redis_conn = get_redis_connection('house_cache')
+                # redis_key = "houses_%s_%s_%s_%s" % (area_id, start_date_str, end_date_str, sort_key)
+                redis_conn.hdel('houses____new', 1)
+            except Exception as e:
+                logger.error(e)
         return http.JsonResponse({'errno': RET.OK, 'errmsg': '发布成功', 'data': {'house_id': house.pk}})
 
 
