@@ -209,6 +209,10 @@ class UserAuthView(View):
         id_card = dict_data.get('id_card')
         if not all([real_name, id_card]):
             return http.JsonResponse({'errno': RET.PARAMERR, 'errmsg': '参数错误'})
+        if re.match(
+                r'(^[1-9]\d{5}(18|19|([23]\d))\d{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$)|(^[1-9]\d{5}\d{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)\d{3}$)',
+                id_card):
+            return http.JsonResponse({'errno': RET.PARAMERR, 'errmsg': '参数错误'})
         user = request.user
         try:
             user.real_name = real_name

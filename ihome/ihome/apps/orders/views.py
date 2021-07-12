@@ -20,7 +20,7 @@ logger = logging.getLogger('django')
 
 class OrdersView(View):
     '''订单'''
-
+    @method_decorator(login_required)
     def get(self, request):
         # 获取当前用户的id
         user = request.user
